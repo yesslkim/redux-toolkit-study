@@ -87,3 +87,55 @@ const Counter = () => {
  
 export default Counter;
 ```
+
+**230130**
+- redux-toolkit 실습 (CRUD)
+
+### nanoid
+- 리덕스 툴킷에서는 `uuid`같은 기능을 기본으로 제공함
+```js
+import { nanoid } from '@reduxjs/toolkit';
+
+console.log(nanoid());
+// 'dgPXxUz_6fWIQBD8XmiSy'
+```
+
+### 유지보수 관련
+- 공통으로 사용되는 콜백함수, 혹은 템플릿의 경우 slice에 작성해두면 추후에 데이터가 변경되거나 로직이 변경되도 한 곳에서 바로 처리가 가능함.
+
+```js
+import { createSlice, nanoid } from '@reduxjs/toolkit'; // uuid같은
+
+const initialState = [
+  {id: '1', title: 'learning redux-1', content: 'example 1 content.'},
+  {id: '2', title: 'learning redux-2', content: 'example 2 content.'}
+]
+
+const postsSlice = createSlice({
+  name: 'posts',
+  initialState,
+  reducers: {
+    postAdded: {
+      reducer(state, action) {
+        state.push(action.payload);
+      },
+      // 🌟 prepare 콜백 함수를 통해 action의 payload를 커스터마이징할 수 있음.
+      // - 추후에 state의 설계 방식이 변경되더라도 한 파일에서 수정 가능.
+      prepare(title, content) {
+        return {
+          payload: {
+            id: nanoid(),
+            title,
+            content
+          }
+        }
+      }
+    }
+  }
+});
+
+// 🌟 자주 사용하는 useSelector의 콜백함수는 이곳에서 관리하면 추후 유지보수에 좋음.
+export const selectAllPosts = (state) => state.posts;
+export const { postAdded } = postsSlice.actions;
+export default postsSlice.reducer;
+```
