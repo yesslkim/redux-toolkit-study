@@ -234,3 +234,94 @@ const reactionButtons = Object.entries(reactionEmoji).map(([name, emoji]) => {
         )
     })
 ```
+**230201**
+### Redux Thunk Middleware
+- Thunk의 의미
+  - Thunk는 컴퓨터 프로그래밍에서 기존의 서브 루틴에 추가적인 연산을 삽입할 때 사용되는 서브루틴이다.
+  - 즉, 리덕스에서 비동기 작업을 처리 할때 사용하는 미들웨어이다.
+
+#### Redux Thunk를 쓸 때 초깃값
+```js
+const initialState = {
+    posts: [],
+    status: 'idle', //'idle' | 'loading' | 'succeeded' | 'failed'
+    error: null
+}
+```
+- 비동기 작업을 통해 받아온 값 뿐만 아니라 백엔드와 통신을 하는 과정에서 데이터가 제대로 받아졌는지 확인이 필요하기 때문에 관련된 상태, 에러등을 받아온다.
+### `createAsyncThunk`
+- createAsyncThunk의 parameters
+  1. type : string
+  2. payloadCreater : callback
+  3. options : object
+- `createAsyncThunk`는 reducer 함수를 생성하지 않는다. 그 이유는 어떤 데이터를 패칭하는지도 모르고 로딩 상태를 어떻게 관리할 건지, 리턴되는 데이터를 어떻게 가공할 지 모르기 때문이다.
+- `createAsyncThunk`는 AsyncThunk를 리턴하게 된다.
+```ts
+export declare type AsyncThunk<Returned, ThunkArg, ThunkApiConfig extends AsyncThunkConfig> = AsyncThunkActionCreator<Returned, ThunkArg, ThunkApiConfig> & {
+    pending: AsyncThunkPendingActionCreator<ThunkArg, ThunkApiConfig>;
+    rejected: AsyncThunkRejectedActionCreator<ThunkArg, ThunkApiConfig>;
+    fulfilled: AsyncThunkFulfilledActionCreator<Returned, ThunkArg, ThunkApiConfig>;
+    typePrefix: string;
+};
+```
+#### type
+- `type`은 문자열로 리덕스의 추가 액션 타입을 생성한다. (총 3가지)
+- 예시
+  - type이 `posts/fetchPosts`인 경우
+  - pending: `posts/fetchPosts/pending`
+  - fulfilled: `posts/fetchPosts/fulfilled`
+  - rejected: `posts/fetchPosts/rejected`
+
+#### payloadCreater
+- 콜백함수로 promise를 리턴한다.
+
+```js
+const fetchUserById = createAsyncThunk(
+  'users/fetchByIdStatus',
+  async (userId: number, thunkAPI) => {
+    const response = await userAPI.fetchById(userId)
+    return response.data
+  }
+)
+```
+- payloadCreate의 경우는 2개의 매개변수를 받는다.
+- 첫번째 매개변수(arg) : single value 
+  - 주로 request시 추가로 필요한 정보 값을 받는다 (예시 : ID)
+  - 만약에 값이 1개 이상인 경우 객체로 묶어서 보내면 된다.
+- 두번째 매개변수(thunkAPI) : object 
+  - * 좀 더 공부 후 추가 예정
+
+### Promise 라이프사이클 액션
+- **추가 공부 필요**
+ - `createAsyncThunk`는 `createAction`을 통해 Redux action creators를 생성한다.
+  - `pending`, `fulfilled`, `rejected`
+  - 해당 액션 객체는 `requestedId`, `arg`, `action.meta`를 가지고 있다.
+  - 이 액션을 reducer에서 처리하기 위해서는, action creators를 `createReducer` 혹은 `createSlice`에서 참조한다.
+
+  ```js
+const reducer1 = createReducer(initialState, {
+  [fetchUserById.fulfilled]: (state, action) => {},
+})
+
+const reducer2 = createReducer(initialState, (builder) => {
+  builder.addCase(fetchUserById.fulfilled, (state, action) => {})
+})
+
+const reducer3 = createSlice({
+  name: 'users',
+  initialState,
+  reducers: {},
+  extraReducers: {
+    [fetchUserById.fulfilled]: (state, action) => {},
+  },
+})
+
+const reducer4 = createSlice({
+  name: 'users',
+  initialState,
+  reducers: {},
+  extraReducers: (builder) => {
+    builder.addCase(fetchUserById.fulfilled, (state, action) => {})
+  },
+})
+  ```

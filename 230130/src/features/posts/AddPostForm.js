@@ -2,27 +2,38 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { selectAllUsers } from '../users/usersSlice';
 
-import { postAdded } from "./postsSlice";
+import { addNewPost } from "./postsSlice";
+
+const initialValue = {
+    title: '',
+    body: '',
+    userId: ''
+}
 
 const AddPostForm = () => {
     const dispatch = useDispatch();
+    const [postData, setPostData] = useState(initialValue);
+    const { title, body, userId } = postData;
+    const [addRequestStatus, setAddRequestStatus] = useState('idle');
     const users = useSelector(selectAllUsers);
-    const [postData, setPostData] = useState({
-        title: '',
-        content: '',
-        userId: ''
-    })
+    const isAllFilledIn = [ title, body, userId].every(post => post.length > 0) && addRequestStatus === 'idle';
+
 
   const onChangeField = (e) => setPostData({ ...postData, [e.target.name]: e.target.value })
-  const isAllFilledIn = postData.title.length > 0 && postData.content.length > 0 && postData.userId.length > 0;
 
 
     const onSavePostClicked = () => {
-      if (isAllFilledIn) {
-        const { title, content, userId } = postData;
-
-        dispatch(postAdded(title, content, userId));
-        setPostData({ title: '', content: '', userId: '' });
+        if (isAllFilledIn) {
+            try {
+                setAddRequestStatus('pending');
+                dispatch(addNewPost(postData)).unwrap();  
+                setPostData(initialValue);
+            } catch (err) {
+                console.log('Failed to save the post', err);
+            } finally {
+                setAddRequestStatus('idle')
+                
+          }
         }
     }
 
@@ -35,21 +46,21 @@ const AddPostForm = () => {
                     type="text"
                     id="title"
                     name="title"
-                    value={postData.title}
+                    value={title}
                     onChange={onChangeField}
                 />
                 <label htmlFor="content">Content:</label>
                 <textarea
-                    id="content"
-                    name="content"
-                    value={postData.content}
+                    id="body"
+                    name="body"
+                    value={body}
                     onChange={onChangeField}
                 />
                 <label htmlFor="userId">Author</label>
                 <select
                     name="userId"
                     id="userId"
-                    value={postData.userId}
+                    value={userId}
                     onChange={onChangeField}
                 >
                     {
