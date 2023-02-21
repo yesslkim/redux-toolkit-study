@@ -26,6 +26,8 @@ function App() {
     setPostTitle(e.target.value);
   }
 
+  console.log(posts)
+
   return (
     <div className="App">
       <h2>RTK Query Practice</h2>
