@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-interface Posts {
+export interface Posts {
     id: number,
     title: string,
     body: string,
@@ -35,10 +35,28 @@ export const apiSlice = createApi({
             },
         }),
         invalidatesTags: ['Posts']
+      }),
+      deletePost: builder.mutation<Posts[], number>({
+        query: (postId) => ({
+            url: `/posts/${postId}`,
+            method: 'DELETE',
+        }),
+        invalidatesTags: ['Posts']
+      }),
+      updatePost: builder.mutation<Posts[], Partial<Posts>>({
+        query: (data) => {
+            const {id, title} = data;
+            return {
+                url:`/posts/${id}`,
+                method: 'PATCH',
+                body: {title}
+            }
+        },
+        invalidatesTags: ['Posts']
       })
     }),
 });
 
-export const { useGetAllPostsQuery, useAddPostMutation } = apiSlice;
+export const { useGetAllPostsQuery, useAddPostMutation, useDeletePostMutation, useUpdatePostMutation } = apiSlice;
 
 
